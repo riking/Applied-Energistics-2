@@ -26,6 +26,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.util.ForgeDirection;
 import appeng.api.AEApi;
 import appeng.api.implementations.guiobjects.INetworkTool;
@@ -97,18 +98,6 @@ public class ContainerNetworkStatus extends AEBaseContainer
 	public long channelUse;
 	@GuiSync(7)
 	public double channelUtilization;
-
-	static final AESharedNBT onlineTag = new AESharedNBT( 0 );
-	static final AESharedNBT noPowerTag = new AESharedNBT( 0 );
-	static final AESharedNBT noChannelTag = new AESharedNBT( 0 );
-	static final AESharedNBT[] tagsByStatus = { onlineTag, noPowerTag, noChannelTag };
-
-	static {
-		onlineTag.setInteger( "MEStatus", 0 );
-		noPowerTag.setInteger( "MEStatus", 1 );
-		noChannelTag.setInteger( "MEStatus", 2 );
-	}
-
 
 	@Override
 	public void detectAndSendChanges()
@@ -195,7 +184,11 @@ public class ContainerNetworkStatus extends AEBaseContainer
 							if ( ais.getTagCompound() != null )
 								((AESharedNBT) ais.getTagCompound()).setInteger( "MEStatus", status );
 							else
-								ais.setTagCompound( (AESharedNBT) AESharedNBT.getSharedTagCompound( tagsByStatus[status].getNBTTagCompoundCopy(), is ) );
+							{
+								NBTTagCompound tag = new NBTTagCompound();
+								tag.setInteger( "MEStatus", status );
+								ais.setTagCompound( (AESharedNBT) AESharedNBT.getSharedTagCompound( tag, is ) );
+							}
 
 							list.add( ais );
 						}
