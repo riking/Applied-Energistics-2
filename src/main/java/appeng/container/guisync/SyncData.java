@@ -137,12 +137,16 @@ public class SyncData
 					field.set( source, val );
 				else if ( field.getType().equals( boolean.class ) )
 					field.set( source, val == 1 );
+				else if ( field.getType().equals( double.class ) )
+					field.set( source, Double.longBitsToDouble( val ) );
 				else if ( field.getType().equals( Integer.class ) )
 					field.set( source, (int) val );
 				else if ( field.getType().equals( Long.class ) )
 					field.set( source, val );
 				else if ( field.getType().equals( Boolean.class ) )
 					field.set( source, val == 1 );
+				else if ( field.getType().equals( Double.class ) )
+					field.set( source, Double.longBitsToDouble( val ) );
 			}
 
 			source.onUpdate( field.getName(), oldValue, field.get( source ) );
@@ -161,8 +165,7 @@ public class SyncData
 	{
 		if ( val instanceof String )
 		{
-			if ( o instanceof EntityPlayerMP )
-				NetworkHandler.instance.sendTo( new PacketValueConfig( "SyncDat." + channel, (String) val ), (EntityPlayerMP) o );
+			NetworkHandler.instance.sendTo( new PacketValueConfig( "SyncDat." + channel, (String) val ), (EntityPlayerMP) o );
 		}
 		else if ( field.getType().isEnum() )
 		{
@@ -175,6 +178,10 @@ public class SyncData
 		else if ( val instanceof Boolean || val.getClass() == boolean.class )
 		{
 			o.sendProgressBarUpdate( source, channel, ((Boolean) val) ? 1 : 0 );
+		}
+		else if ( val instanceof Double || val.getClass() == double.class )
+		{
+			NetworkHandler.instance.sendTo( new PacketProgressBar( channel, Double.doubleToLongBits( (Double) val ) ), (EntityPlayerMP) o );
 		}
 		else
 		{

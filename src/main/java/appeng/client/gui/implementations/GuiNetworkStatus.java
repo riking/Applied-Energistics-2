@@ -154,13 +154,9 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 	}
 
 	private static final GuiText[] networkStateTexts = {
-			GuiText.NetTypeBooting, GuiText.NetTypeAdHoc,
-			GuiText.NetTypeController, GuiText.NetTypeConflict,
-			GuiText.NetTypeBooting
+			GuiText.NetTypeAdHoc, GuiText.NetTypeController, GuiText.NetTypeConflict,
 	};
-	private static int[] networkStateColors = {
-			0x606060, 0x308030, 0x303080, 0x803030, 0x606060
-	};
+	private static int[] networkStateColors = { 0x308030, 0x303080, 0x803030 };
 
 	@Override
 	public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY)
@@ -169,9 +165,9 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 
 		int width = fontRendererObj.drawString( GuiText.NetworkDetails.getLocal(), 8, 6, 4210752 );
 
-		fontRendererObj.drawString( networkStateTexts[ns.gridStatus].getLocal(), 8 + width + 3, 6, networkStateColors[ns.gridStatus] );
+		fontRendererObj.drawString( networkStateTexts[ns.gridStatus.ordinal()].getLocal(), 8 + width + 3, 6, networkStateColors[ns.gridStatus.ordinal()] );
 
-		fontRendererObj.drawString( GuiText.ChannelsUsed.getLocal() + ": " + ns.channelUse + " " + GuiText.of_l.getLocal() + " " + ns.channelCount, 13, 16, 4210752 );
+		fontRendererObj.drawString( GuiText.ChannelsUsed.getLocal() + ": " + ns.channelUse + " " + GuiText.of_l.getLocal() + " " + ns.channelCount + String.format(" (%.2f%%)", ns.channelUtilization * 100), 13, 16, 4210752 );
 		fontRendererObj.drawString( GuiText.StoredPower.getLocal() + ": " + Platform.formatPowerLong( ns.currentPower, false ), 13, 26, 4210752 );
 		fontRendererObj.drawString( GuiText.MaxPower.getLocal() + ": " + Platform.formatPowerLong( ns.maxPower, false ), 13, 36, 4210752 );
 

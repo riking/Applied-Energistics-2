@@ -95,7 +95,7 @@ public class ContainerNetworkStatus extends AEBaseContainer
 	public long channelCount;
 	@GuiSync(6)
 	public long channelUse;
-	//@GuiSync(7)
+	@GuiSync(7)
 	public double channelUtilization;
 
 	static final AESharedNBT onlineTag = new AESharedNBT( 0 );
@@ -114,7 +114,7 @@ public class ContainerNetworkStatus extends AEBaseContainer
 	public void detectAndSendChanges()
 	{
 		delay++;
-		if ( Platform.isServer() && delay > 15 && network != null )
+		if ( Platform.isServer() && delay > 20 && network != null )
 		{
 			delay = 0;
 
