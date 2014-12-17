@@ -90,11 +90,13 @@ public class ContainerNetworkStatus extends AEBaseContainer
 	@GuiSync(3)
 	public long maxPower;
 	@GuiSync(4)
-	public int gridStatus; // 0 = ad-hoc, 1 = controller, 2 = conflict, 3 = booting
+	public ControllerState gridStatus;
 	@GuiSync(5)
 	public long channelCount;
 	@GuiSync(6)
 	public long channelUse;
+	//@GuiSync(7)
+	public double channelUtilization;
 
 	static final AESharedNBT onlineTag = new AESharedNBT( 0 );
 	static final AESharedNBT noPowerTag = new AESharedNBT( 0 );
@@ -128,18 +130,12 @@ public class ContainerNetworkStatus extends AEBaseContainer
 			IPathingGrid paths = network.getCache( IPathingGrid.class );
 			if ( paths != null )
 			{
-				ControllerState controllerState = paths.getControllerState();
-				gridStatus = controllerState.ordinal() + 1;
-				if (paths.isNetworkBooting()) {
-					gridStatus = 0;
-				}
-				switch (gridStatus) {
-				case 1: // ad-hoc
+				gridStatus = paths.getControllerState();
+
+				if (gridStatus == ControllerState.NO_CONTROLLER) {
 					channelUse = network.getPivot().usedChannels();
 					channelCount = network.getPivot().getMaxChannels();
-					break;
-				case 2: // controller
-
+				} else if (gridStatus == ControllerState.CONTROLLER_ONLINE) {
 					// Collect all devices directly attached to controller blocks.
 					Set<IGridNode> controllerAttachedDevices = new HashSet<IGridNode>();
 
@@ -155,18 +151,21 @@ public class ContainerNetworkStatus extends AEBaseContainer
 
 					int _channelCount = 0;
 					int _channelUse = 0;
+					double utilizationSum = 0d;
+					int utilizationCount = 0;
 					for (IGridNode attached : controllerAttachedDevices)
 					{
 						_channelCount += attached.getMaxChannels();
 						_channelUse += attached.usedChannels();
+						utilizationSum += attached.usedChannels() / attached.getMaxChannels();
+						utilizationCount++;
 					}
 
 					channelCount = _channelCount;
 					channelUse = _channelUse;
-					break;
-				default: // conflict, booting
+					channelUtilization = utilizationSum / utilizationCount;
+				} else {
 					channelCount = channelUse = 0;
-					break;
 				}
 			}
 
