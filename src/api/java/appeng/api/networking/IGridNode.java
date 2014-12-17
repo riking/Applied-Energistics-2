@@ -161,4 +161,15 @@ public interface IGridNode
 	 */
 	int getPlayerID();
 
+	/**
+	 * number of channels currently passing through this GridNode
+	 * @return channel count
+	 */
+	int usedChannels();
+
+	/**
+	 * Maximum number of channels that can pass through this GridNode.
+	 * @return max channel count
+	 */
+	int getMaxChannels();
 }

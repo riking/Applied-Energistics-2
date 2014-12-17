@@ -604,6 +604,15 @@ public final class AEItemStack extends AEStack<IAEItemStack> implements IAEItemS
 	}
 
 	@Override
+	public void setTagCompound(IAETagCompound tag)
+	{
+		if (tag instanceof AESharedNBT)
+			def.tagCompound = (AESharedNBT) tag;
+		else
+			throw new IllegalArgumentException("bad nbt class for setTagCompound()");
+	}
+
+	@Override
 	public boolean isSameType(IAEItemStack otherStack)
 	{
 		if ( otherStack == null )

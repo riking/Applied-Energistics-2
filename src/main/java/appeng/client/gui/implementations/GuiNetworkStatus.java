@@ -21,6 +21,8 @@ package appeng.client.gui.implementations;
 
 import java.util.List;
 
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
@@ -100,7 +102,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 	private void setScrollBar()
 	{
 		int size = repo.size();
-		myScrollBar.setTop( 39 ).setLeft( 175 ).setHeight( 78 );
+		myScrollBar.setTop( 49 ).setLeft( 175 ).setHeight( 78 );
 		myScrollBar.setRange( 0, (size + 4) / 5 - rows, 1 );
 	}
 
@@ -127,7 +129,7 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 		for (int z = 0; z <= 4 * 5; z++)
 		{
 			int minX = gx + 14 + x * 31;
-			int minY = gy + 41 + y * 18;
+			int minY = gy + 51 + y * 18;
 
 			if ( minX < mouse_x && minX + 28 > mouse_x )
 			{
@@ -151,25 +153,37 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 		super.drawScreen( mouse_x, mouse_y, btn );
 	}
 
+	private static final GuiText[] networkStateTexts = {
+			GuiText.NetTypeBooting, GuiText.NetTypeAdHoc,
+			GuiText.NetTypeController, GuiText.NetTypeConflict,
+			GuiText.NetTypeBooting
+	};
+	private static int[] networkStateColors = {
+			0x606060, 0x308030, 0x303080, 0x803030, 0x606060
+	};
+
 	@Override
 	public void drawFG(int offsetX, int offsetY, int mouseX, int mouseY)
 	{
 		ContainerNetworkStatus ns = (ContainerNetworkStatus) inventorySlots;
 
-		fontRendererObj.drawString( GuiText.NetworkDetails.getLocal(), 8, 6, 4210752 );
+		int width = fontRendererObj.drawString( GuiText.NetworkDetails.getLocal(), 8, 6, 4210752 );
 
-		fontRendererObj.drawString( GuiText.StoredPower.getLocal() + ": " + Platform.formatPowerLong( ns.currentPower, false ), 13, 16, 4210752 );
-		fontRendererObj.drawString( GuiText.MaxPower.getLocal() + ": " + Platform.formatPowerLong( ns.maxPower, false ), 13, 26, 4210752 );
+		fontRendererObj.drawString( networkStateTexts[ns.gridStatus].getLocal(), 8 + width + 3, 6, networkStateColors[ns.gridStatus] );
 
-		fontRendererObj.drawString( GuiText.PowerInputRate.getLocal() + ": " + Platform.formatPowerLong( ns.avgAddition, true ), 13, 143 - 10, 4210752 );
-		fontRendererObj.drawString( GuiText.PowerUsageRate.getLocal() + ": " + Platform.formatPowerLong( ns.powerUsage, true ), 13, 143 - 20, 4210752 );
+		fontRendererObj.drawString( GuiText.ChannelsUsed.getLocal() + ": " + ns.channelUse + " " + GuiText.of_l.getLocal() + " " + ns.channelCount, 13, 16, 4210752 );
+		fontRendererObj.drawString( GuiText.StoredPower.getLocal() + ": " + Platform.formatPowerLong( ns.currentPower, false ), 13, 26, 4210752 );
+		fontRendererObj.drawString( GuiText.MaxPower.getLocal() + ": " + Platform.formatPowerLong( ns.maxPower, false ), 13, 36, 4210752 );
+
+		fontRendererObj.drawString( GuiText.PowerInputRate.getLocal() + ": " + Platform.formatPowerLong( ns.avgAddition, true ), 13, 152 - 10, 4210752 );
+		fontRendererObj.drawString( GuiText.PowerUsageRate.getLocal() + ": " + Platform.formatPowerLong( ns.powerUsage, true ), 13, 152 - 20, 4210752 );
 
 		int sectionLength = 30;
 
 		int x = 0;
 		int y = 0;
 		int xo = 12;
-		int yo = 42;
+		int yo = 52;
 		int viewStart = 0;// myScrollBar.getCurrentScroll() * 5;
 		int viewEnd = viewStart + 5 * 4;
 
@@ -197,6 +211,9 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 				int posX = x * sectionLength + xo + sectionLength - 18;
 				int posY = y * 18 + yo;
 
+				NBTTagCompound tag = (NBTTagCompound) refStack.getTagCompound();
+				int machineStatus = tag.getInteger( "MEStatus" );
+
 				if ( tooltip == z - viewStart )
 				{
 					ToolTip = Platform.getItemDisplayName( repo.getItem( z ) );
@@ -205,11 +222,27 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 					if ( refStack.getCountRequestable() > 0 )
 						ToolTip = ToolTip + ( '\n' + GuiText.EnergyDrain.getLocal() + ": " + Platform.formatPowerLong( refStack.getCountRequestable(), true ));
 
+					switch (machineStatus) {
+					case 0:
+						break;
+					case 1:
+						ToolTip = ToolTip + ( '\n' + EnumChatFormatting.RED.toString() + "No Power");
+						break;
+					case 2:
+						ToolTip = ToolTip + ( '\n' + EnumChatFormatting.RED.toString() + "No Channel");
+						break;
+					}
+
 					toolPosX = x * sectionLength + xo + sectionLength - 8;
 					toolPosY = y * 18 + yo;
 				}
 
 				drawItem( posX, posY, repo.getItem( z ) );
+
+				if (machineStatus > 0)
+				{
+					drawRect( posX - 1, posY - 1, posX + 16 + 1, posY + 16 + 1, 0x60D07070 );
+				}
 
 				x++;
 

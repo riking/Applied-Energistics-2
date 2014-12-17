@@ -57,6 +57,12 @@ public final class AEFluidStack extends AEStack<IAEFluidStack> implements IAEFlu
 	}
 
 	@Override
+	public void setTagCompound(IAETagCompound tag)
+	{
+		this.tagCompound = tag;
+	}
+
+	@Override
 	public void add(IAEFluidStack option)
 	{
 		if ( option == null )

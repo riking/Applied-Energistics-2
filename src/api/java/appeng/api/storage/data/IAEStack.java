@@ -184,6 +184,13 @@ public interface IAEStack<StackType extends IAEStack>
 	IAETagCompound getTagCompound();
 
 	/**
+	 * set the NBT Data for the item.
+	 *
+	 * @param tag nbt data
+	 */
+	void setTagCompound(IAETagCompound tag);
+
+	/**
 	 * @return true if the stack is a {@link IAEItemStack}
 	 */
 	boolean isItem();

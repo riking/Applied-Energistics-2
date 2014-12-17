@@ -19,27 +19,36 @@
 package appeng.container.implementations;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.util.ForgeDirection;
 import appeng.api.AEApi;
 import appeng.api.implementations.guiobjects.INetworkTool;
+import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridBlock;
+import appeng.api.networking.IGridConnection;
 import appeng.api.networking.IGridHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.energy.IEnergyGrid;
+import appeng.api.networking.pathing.ControllerState;
+import appeng.api.networking.pathing.IPathingGrid;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.storage.data.IItemList;
 import appeng.container.AEBaseContainer;
 import appeng.container.guisync.GuiSync;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.PacketMEInventoryUpdate;
+import appeng.tile.networking.TileController;
 import appeng.util.Platform;
 import appeng.util.item.AEItemStack;
+import appeng.util.item.AESharedNBT;
 
 public class ContainerNetworkStatus extends AEBaseContainer
 {
@@ -81,6 +90,24 @@ public class ContainerNetworkStatus extends AEBaseContainer
 	public long currentPower;
 	@GuiSync(3)
 	public long maxPower;
+	@GuiSync(4)
+	public int gridStatus; // 0 = ad-hoc, 1 = controller, 2 = conflict, 3 = booting
+	@GuiSync(5)
+	public long channelCount;
+	@GuiSync(6)
+	public long channelUse;
+
+	static final AESharedNBT onlineTag = new AESharedNBT( 0 );
+	static final AESharedNBT noPowerTag = new AESharedNBT( 0 );
+	static final AESharedNBT noChannelTag = new AESharedNBT( 0 );
+	static final AESharedNBT[] tagsByStatus = { onlineTag, noPowerTag, noChannelTag };
+
+	static {
+		onlineTag.setInteger( "MEStatus", 0 );
+		noPowerTag.setInteger( "MEStatus", 1 );
+		noChannelTag.setInteger( "MEStatus", 2 );
+	}
+
 
 	@Override
 	public void detectAndSendChanges()
@@ -99,6 +126,51 @@ public class ContainerNetworkStatus extends AEBaseContainer
 				maxPower = (long) (100.0 * eg.getMaxStoredPower());
 			}
 
+			IPathingGrid paths = network.getCache( IPathingGrid.class );
+			if ( paths != null )
+			{
+				ControllerState controllerState = paths.getControllerState();
+				gridStatus = controllerState.ordinal() + 1;
+				if (paths.isNetworkBooting()) {
+					gridStatus = 0;
+				}
+				switch (gridStatus) {
+				case 1: // ad-hoc
+					channelUse = network.getPivot().usedChannels();
+					channelCount = network.getPivot().getMaxChannels();
+					break;
+				case 2: // controller
+
+					// Collect all devices directly attached to controller blocks.
+					Set<IGridNode> controllerAttachedDevices = new HashSet<IGridNode>();
+
+					for (IGridNode controllerBlock : network.getMachines( TileController.class ))
+					{
+						for (IGridConnection connection : controllerBlock.getConnections())
+						{
+							IGridNode other = connection.getOtherSide( controllerBlock );
+							if (!other.hasFlag( GridFlags.CANNOT_CARRY ))
+								controllerAttachedDevices.add(other);
+						}
+					}
+
+					int _channelCount = 0;
+					int _channelUse = 0;
+					for (IGridNode attached : controllerAttachedDevices)
+					{
+						_channelCount += attached.getMaxChannels();
+						_channelUse += attached.usedChannels();
+					}
+
+					channelCount = _channelCount;
+					channelUse = _channelUse;
+					break;
+				default: // conflict, booting
+					channelCount = channelUse = 0;
+					break;
+				}
+			}
+
 			PacketMEInventoryUpdate piu;
 			try
 			{
@@ -115,7 +187,18 @@ public class ContainerNetworkStatus extends AEBaseContainer
 						{
 							IAEItemStack ais = AEItemStack.create( is );
 							ais.setStackSize( 1 );
+
+							// Encode power usage in the requestable count
 							ais.setCountRequestable( (long) (blk.getIdlePowerUsage() * 100.0) );
+
+							// Encode machine status in the itemstack (this breaks grouping)
+							int status = getMachineStatus(machine);
+
+							if ( ais.getTagCompound() != null )
+								((AESharedNBT) ais.getTagCompound()).setInteger( "MEStatus", status );
+							else
+								ais.setTagCompound( (AESharedNBT) AESharedNBT.getSharedTagCompound( tagsByStatus[status].getNBTTagCompoundCopy(), is ) );
+
 							list.add( ais );
 						}
 					}
@@ -137,5 +220,14 @@ public class ContainerNetworkStatus extends AEBaseContainer
 
 		}
 		super.detectAndSendChanges();
+	}
+
+	private int getMachineStatus(IGridNode machine)
+	{
+		if (machine.isActive())
+			return 0;
+		if (!machine.meetsChannelRequirements())
+			return 2;
+		return 1;
 	}
 }

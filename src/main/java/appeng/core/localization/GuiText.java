@@ -24,7 +24,7 @@ public enum GuiText
 {
 	inventory("container"), // mc's default Inventory localization.
 
-	Chest, StoredEnergy, Of, Condenser, Drive, GrindStone, SkyChest,
+	Chest, StoredEnergy, Of, of_l, Condenser, Drive, GrindStone, SkyChest,
 
 	VibrationChamber, SpatialIOPort, LevelEmitter, Terminal,
 
@@ -68,7 +68,9 @@ public enum GuiText
 
 	NoCraftingJobs, CPUs, FacadeCrafting, inWorldCraftingPresses, ChargedQuartzFind,
 	
-	Included, Excluded, Partitioned, Precise, Fuzzy;
+	Included, Excluded, Partitioned, Precise, Fuzzy, NetTypeAdHoc, NetTypeBooting,
+
+	NetTypeController, NetTypeConflict, ChannelsUsed;
 
 	final String root;
 
