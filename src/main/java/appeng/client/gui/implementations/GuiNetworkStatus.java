@@ -218,7 +218,6 @@ public class GuiNetworkStatus extends AEBaseGui implements ISortSource
 				{
 					ToolTip = Platform.getItemDisplayName( repo.getItem( z ) );
 
-					ToolTip = ToolTip + ( '\n' + GuiText.Installed.getLocal() + ": " + (refStack.getStackSize()));
 					if ( refStack.getCountRequestable() > 0 )
 						ToolTip = ToolTip + ( '\n' + GuiText.EnergyDrain.getLocal() + ": " + Platform.formatPowerLong( refStack.getCountRequestable(), true ));
 
